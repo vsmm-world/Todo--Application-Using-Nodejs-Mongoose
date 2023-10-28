@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Mongoose</title>
+</head>
+
+<body>
+    <div id="todos">
+
+    </div>
+    <div id="uptodos">
+        <label for="ntitle"> Title :
+            <input type="text" name="ntitle" id="ntitle">
+        </label>
+        <label for="ntask"> Task :
+            <input type="text" name="ntask" id="ntask">
+        </label>
+
+        <button id="update">update</button>
+    </div>
+
+    <label for="title"> Title :
+        <input type="text" name="title" id="title">
+    </label>
+    <label for="task"> Task :
+        <input type="text" name="task" id="task">
+    </label>
+
+    <button id="add">add</button>
+
+    <script>
+
+        const todos = document.getElementById('todos');
+        const title = document.getElementById('title');
+        const task = document.getElementById('task');
+        const add = document.getElementById('add');
+        const uptodos = document.getElementById('uptodos');
+        const ntitle = document.getElementById('ntitle');
+        const ntask = document.getElementById('ntask');
+        const update = document.getElementById('update');
+
+        uptodos.style.display = 'none';
+
+        const baseURL = "http://localhost:3000/"
+
+        add.addEventListener('click', adding);
+
+        
+    async function adding(){
+        if(title.value == '' || task.value == ''){
+            alert('Please fill all the fields');
+            return;
+        }
+        const add = await fetch(baseURL+'api/todos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title.value,
+                task: task.value
+            })
+        }).then(() => {
+
+            title.value = '';
+            task.value = '';
+            console.log('added');
+
+            refresh();
+        }).catch((err) => {
+            console.log("Locha Padya Bhai");
+        }).finally(()=>{
+            
+            refresh();
+        })
+    }
+
+
+        async function refresh() {
+            const data = await getdata().catch((err) => {
+                console.log(err);
+            }  );
+            todos.innerHTML = '';
+
+            data.forEach(element => {
+                todos.innerHTML += `
+                <div>
+                    <h3>${element.title}</h3>
+                    <p>${element.task}</p>
+                    <button onclick="deleteitem('${element._id}')">delete</button>
+                    <button onclick="updateitem('${element._id}')">update</button>
+                </div>
+                `
+            });
+        }
+        refresh();
+        async function getdata() {
+
+            const res = await fetch(baseURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+
+            return data;
+        }
+
+        async function deleteitem(id) {
+            const res = await fetch(baseURL + 'api/del', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:JSON.stringify({
+                    id:id
+                })
+            }).then(()=>{
+                console.log('deleted');
+                refresh();
+            }).catch((err)=>{
+                console.log(err);
+            })            
+        }
+        let fltr;
+        async function updateitem(id){
+            uptodos.style.display = 'block';
+            const data = await getdata().catch((err) => {
+                console.log(err);
+            }  );
+            data.forEach(element => {
+                if(element._id == id){
+                    fltr = element._id;
+                    ntitle.value = element.title;
+                    ntask.value = element.task;
+                }
+            });
+        }
+
+        update.addEventListener('click',updating);
+
+        async function updating(){
+            const res= await fetch(baseURL+'api/update',{
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify({
+                    id:fltr,
+                    ntitle:ntitle.value,
+                    ntask:ntask.value
+                })
+            }).then(()=>{
+                console.log('updated');
+                uptodos.style.display = 'none';
+                refresh();
+            }).catch((err)=>{
+                console.log(err);
+            })
+        }
+
+
+    </script>
+</body>
+
+</html>
